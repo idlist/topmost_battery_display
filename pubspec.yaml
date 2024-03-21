@@ -10,6 +10,9 @@ dependencies:
   battery_plus: ^6.0.0
   flutter:
     sdk: flutter
+  json_annotation: ^4.8.1
+  path_provider: ^2.1.2
+  patterns_canvas: ^0.4.0
   tray_manager: ^0.2.1
   url_launcher: ^6.2.5
   window_manager: ^0.3.8
@@ -21,3 +24,9 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/
+  fonts:
+    - family: D-Din
+      fonts:
+        - asset: assets/d-din.bold.monospaced.otf
