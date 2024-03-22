@@ -40,6 +40,8 @@ Future<void> _setupTrayManager() async {
   await trayManager.setIcon(
     Platform.isWindows ? 'assets/app_icon.ico' : 'assets/app_icon.png',
   );
+
+  await trayManager.setToolTip("Topmost Battery Display");
 }
 
 class MainApp extends StatefulWidget {
