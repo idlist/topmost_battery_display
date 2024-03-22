@@ -1,16 +1,17 @@
 import 'dart:io';
-import 'dart:math' as math;
-import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:battery_plus/battery_plus.dart';
 import 'package:patterns_canvas/patterns_canvas.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'constants.dart';
+import 'battery_display.dart';
+import 'adjust_position.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,11 +47,6 @@ class MainApp extends StatefulWidget {
 
   @override
   State<MainApp> createState() => _MainAppState();
-}
-
-enum ColorTheme {
-  light,
-  dark,
 }
 
 class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
@@ -92,9 +88,21 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
           ),
         ),
         MenuItem.separator(),
-        MenuItem(
-          key: 'open-directory',
-          label: 'Open data folder',
+        MenuItem.submenu(
+          key: 'advanced',
+          label: 'Advanced options',
+          submenu: Menu(
+            items: [
+              MenuItem(
+                key: 'open-directory',
+                label: 'Open data folder',
+              ),
+              MenuItem(
+                key: 'reset-position',
+                label: 'Reset position',
+              ),
+            ],
+          ),
         ),
         MenuItem(
           key: 'exit',
@@ -117,7 +125,10 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
       final data = jsonDecode(jsonString);
 
       setState(() {
-        _position = Offset(data['dx'], data['dy']);
+        _position = Offset(
+          (data['dx'] as num).toDouble(),
+          (data['dy'] as num).toDouble(),
+        );
         _show = data['show'];
         _clickThrough = data['click-through'];
         _colorTheme = ColorTheme.values[data['color-theme']];
@@ -132,6 +143,7 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
   }
 
   Future<void> _saveConfig({bool log = true}) async {
+    _position = await windowManager.getPosition();
     final file = await _configFile;
 
     final data = <String, dynamic>{
@@ -160,7 +172,9 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
         skipTaskbar: true,
         alwaysOnTop: true,
       );
-      windowManager.setPosition(_position!);
+      getAdjustedPosition(_position!).then((position) {
+        windowManager.setPosition(position);
+      });
 
       windowManager.waitUntilReadyToShow(windowOption, () async {
         await Future.wait([
@@ -254,6 +268,11 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
       case 'open-directory':
         _openDirectory();
 
+      case 'reset-position':
+        windowManager.setPosition(defaultPosition).then((value) {
+          _saveConfig();
+        });
+
       case 'exit':
         _saveConfig().then((value) {
           exit(0);
@@ -330,135 +349,5 @@ class NotClickthoughPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return true;
-  }
-}
-
-class BatteryDisplay extends StatefulWidget {
-  const BatteryDisplay({
-    super.key,
-    this.colorTheme = ColorTheme.dark,
-  });
-
-  final ColorTheme colorTheme;
-
-  @override
-  State<BatteryDisplay> createState() => _BatteryDisplayState();
-}
-
-class _BatteryDisplayState extends State<BatteryDisplay> {
-  bool _hasBattery = true;
-  int _percentage = 100;
-  final Battery _battery = Battery();
-  Timer? _batteryQueryTimer;
-
-  Color _getBackgroundColor(ColorTheme colorMode) {
-    return switch (colorMode) {
-      ColorTheme.dark => const Color.fromRGBO(0, 0, 0, 0.5),
-      ColorTheme.light => const Color.fromRGBO(255, 255, 255, 0.5)
-    };
-  }
-
-  Color _getColor(ColorTheme colorMode) {
-    return switch (colorMode) {
-      ColorTheme.dark => Colors.white,
-      ColorTheme.light => Colors.black,
-    };
-  }
-
-  IconData _getBatteryIcon() {
-    int stage = (_percentage / 100.0 * 8.0).floor();
-
-    return switch (stage) {
-      0 => Icons.battery_0_bar_rounded,
-      1 => Icons.battery_1_bar_rounded,
-      2 => Icons.battery_2_bar_rounded,
-      3 => Icons.battery_3_bar_rounded,
-      4 => Icons.battery_4_bar_rounded,
-      5 => Icons.battery_5_bar_rounded,
-      6 => Icons.battery_6_bar_rounded,
-      _ => Icons.battery_full_rounded,
-    };
-  }
-
-  Future<void> _getBatteryLevel() async {
-    try {
-      int percentage = await _battery.batteryLevel;
-
-      setState(() {
-        _percentage = percentage;
-        _hasBattery = true;
-      });
-    } catch (err) {
-      setState(() {
-        _hasBattery = false;
-      });
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    _getBatteryLevel();
-    _batteryQueryTimer = Timer.periodic(
-      const Duration(minutes: 1),
-      (timer) {
-        _getBatteryLevel();
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    _batteryQueryTimer?.cancel();
-
-    super.dispose();
-  }
-
-  @override
-  Widget build(Object context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: _getBackgroundColor(widget.colorTheme),
-        borderRadius: const BorderRadius.all(Radius.circular(8)),
-      ),
-      height: 32,
-      constraints: const BoxConstraints(minWidth: 80),
-      child: UnconstrainedBox(
-        constrainedAxis: Axis.vertical,
-        child: _hasBattery
-            ? SizedBox(
-                width: 54,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Transform.rotate(
-                      angle: math.pi / 2,
-                      child: Icon(
-                        _getBatteryIcon(),
-                        color: _getColor(widget.colorTheme),
-                      ),
-                    ),
-                    Text(
-                      _percentage.toString(),
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _getColor(widget.colorTheme),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : SizedBox(
-                width: 80,
-                child: Center(
-                  child: Text(
-                    "No Battery",
-                    style: TextStyle(color: _getColor(widget.colorTheme)),
-                  ),
-                ),
-              ),
-      ),
-    );
   }
 }

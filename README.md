@@ -1,3 +1,3 @@
-# topmost_battery_display
+# Topmost Battery Display
 
-A new Flutter project.
+A mini Flutter app to have a topmost battery display.
