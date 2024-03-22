@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'constants.dart';
 import 'battery_display.dart';
 import 'adjust_position.dart';
+import 'generated/version.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,63 +57,6 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
   bool _show = true;
   bool _clickThrough = false;
   ColorTheme _colorTheme = ColorTheme.dark;
-
-  Menu _generateMenu() {
-    return Menu(
-      items: [
-        MenuItem.checkbox(
-          checked: _show,
-          key: 'show',
-          label: 'Show widget',
-        ),
-        MenuItem.separator(),
-        MenuItem.checkbox(
-          checked: _clickThrough,
-          key: 'click-through',
-          label: 'Click-through',
-        ),
-        MenuItem.submenu(
-          key: 'color-theme',
-          label: 'Color theme',
-          submenu: Menu(
-            items: [
-              MenuItem.checkbox(
-                checked: _colorTheme == ColorTheme.dark,
-                key: 'color-theme-dark',
-                label: 'Dark',
-              ),
-              MenuItem.checkbox(
-                checked: _colorTheme == ColorTheme.light,
-                key: 'color-theme-light',
-                label: 'Light',
-              )
-            ],
-          ),
-        ),
-        MenuItem.separator(),
-        MenuItem.submenu(
-          key: 'advanced',
-          label: 'Advanced options',
-          submenu: Menu(
-            items: [
-              MenuItem(
-                key: 'open-directory',
-                label: 'Open data folder',
-              ),
-              MenuItem(
-                key: 'reset-position',
-                label: 'Reset position',
-              ),
-            ],
-          ),
-        ),
-        MenuItem(
-          key: 'exit',
-          label: 'Exit',
-        ),
-      ],
-    );
-  }
 
   Future<File> get _configFile async {
     final path = await _localPath;
@@ -217,11 +161,84 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
     });
   }
 
+  Menu _generateMenu() {
+    return Menu(
+      items: [
+        MenuItem.checkbox(
+          checked: _show,
+          key: 'show',
+          label: 'Show Widget',
+        ),
+        MenuItem.separator(),
+        MenuItem.checkbox(
+          checked: _clickThrough,
+          key: 'click-through',
+          label: 'Click-through',
+        ),
+        MenuItem.submenu(
+          key: 'color-theme',
+          label: 'Color Theme',
+          submenu: Menu(
+            items: [
+              MenuItem.checkbox(
+                checked: _colorTheme == ColorTheme.dark,
+                key: 'color-theme-dark',
+                label: 'Dark',
+              ),
+              MenuItem.checkbox(
+                checked: _colorTheme == ColorTheme.light,
+                key: 'color-theme-light',
+                label: 'Light',
+              )
+            ],
+          ),
+        ),
+        MenuItem.submenu(
+          key: 'advanced',
+          label: 'Advanced Options',
+          submenu: Menu(
+            items: [
+              MenuItem(
+                key: 'open-directory',
+                label: 'Open Data Folder',
+              ),
+              MenuItem(
+                key: 'reset-position',
+                label: 'Reset Position',
+              ),
+            ],
+          ),
+        ),
+        MenuItem.separator(),
+        MenuItem(
+          disabled: true,
+          label: 'Topmost Battery Display $packageVersion',
+        ),
+        MenuItem(
+          key: 'github-repo',
+          label: 'GitHub Repository',
+        ),
+        MenuItem(
+          key: 'exit',
+          label: 'Exit',
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openMenu() async {
+    await trayManager.setContextMenu(_generateMenu());
+    await trayManager.popUpContextMenu();
+  }
+
+  @override
+  void onTrayIconMouseDown() {
+    _openMenu();
+  }
+
   @override
   void onTrayIconRightMouseDown() {
-    trayManager.setContextMenu(_generateMenu()).then((value) {
-      trayManager.popUpContextMenu();
-    });
+    _openMenu();
   }
 
   @override
@@ -274,6 +291,12 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
         windowManager.setPosition(defaultPosition).then((value) {
           _saveConfig();
         });
+
+      case 'github-repo':
+        launchUrl(Uri(
+          scheme: 'https',
+          path: 'github.com/idlist/topmost_battery_display',
+        ));
 
       case 'exit':
         _saveConfig().then((value) {

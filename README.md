@@ -2,12 +2,14 @@
 
 A mini Flutter app to have a topmost battery display.
 
-## Available platform
+![screenshot](./assets_doc/display.png)
 
-Windows
+## Available Platform
 
-## Why this?
+Windows.
+
+## Why This?
 
 The story is that the battery of my laptop (even with the power cable plugged) is still drained when running heavy things, especially when playing video games.
 
-And in these scenarios, the taskbar is usually hidden and and I can't see the battery icon in it.
+In these scenarios, the taskbar is usually hidden and and I can't see the battery icon in it. As a result, I decided to develop a battery display by myself.

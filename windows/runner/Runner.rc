@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "idl.ist" "\0"
-            VALUE "FileDescription", "topmost_battery_display" "\0"
+            VALUE "FileDescription", "Topmost Battery Display" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "topmost_battery_display" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2024 idl.ist. All rights reserved." "\0"
             VALUE "OriginalFilename", "topmost_battery_display.exe" "\0"
-            VALUE "ProductName", "topmost_battery_display" "\0"
+            VALUE "ProductName", "Topmost Battery Display" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

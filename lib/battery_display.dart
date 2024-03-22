@@ -100,8 +100,9 @@ class _BatteryDisplayState extends State<BatteryDisplay> {
       child: UnconstrainedBox(
         constrainedAxis: Axis.vertical,
         child: _hasBattery
-            ? SizedBox(
-                width: 54,
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                width: 80,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
