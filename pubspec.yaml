@@ -1,7 +1,7 @@
 name: topmost_battery_display
 description: "Topmost Battery Display."
 publish_to: 'none'
-version: 0.1.0
+version: 0.1.1
 
 environment:
   sdk: '>=3.3.1 <4.0.0'
@@ -10,6 +10,8 @@ dependencies:
   battery_plus: ^6.0.0
   flutter:
     sdk: flutter
+  launch_at_startup: ^0.2.2
+  package_info_plus: ^6.0.0
   path_provider: ^2.1.2
   patterns_canvas: ^0.4.0
   screen_retriever: ^0.1.9
@@ -18,8 +20,6 @@ dependencies:
   window_manager: ^0.3.8
 
 dev_dependencies:
-  build_runner: ^2.4.8
-  build_version: ^2.1.1
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0

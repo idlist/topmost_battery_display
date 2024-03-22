@@ -8,14 +8,20 @@ import 'package:window_manager/window_manager.dart';
 import 'package:patterns_canvas/patterns_canvas.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:launch_at_startup/launch_at_startup.dart';
 
 import 'constants.dart';
 import 'battery_display.dart';
 import 'adjust_position.dart';
-import 'generated/version.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  launchAtStartup.setup(
+    appName: 'Topmost Battery Display',
+    appPath: Platform.resolvedExecutable,
+  );
 
   await Future.wait([
     _setupWindowManager(),
@@ -57,6 +63,8 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
   bool _show = true;
   bool _clickThrough = false;
   ColorTheme _colorTheme = ColorTheme.dark;
+  late String _version;
+  bool _launchAtStartup = false;
 
   Future<File> get _configFile async {
     final path = await _localPath;
@@ -78,6 +86,7 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
         _show = data['show'];
         _clickThrough = data['click-through'];
         _colorTheme = ColorTheme.values[data['color-theme']];
+        _launchAtStartup = data['launch-at-startup'];
       });
 
       developer.log('loaded.', name: 'config.load');
@@ -98,6 +107,7 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
       'show': _show,
       'click-through': _clickThrough,
       'color-theme': _colorTheme.index,
+      'launch-at-startup': _launchAtStartup,
     };
     await file.writeAsString(jsonEncode(data));
 
@@ -109,6 +119,10 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
   @override
   void initState() {
     super.initState();
+
+    PackageInfo.fromPlatform().then((info) {
+      _version = info.version;
+    });
 
     _loadConfig().then((value) {
       const windowOption = WindowOptions(
@@ -169,6 +183,11 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
           key: 'show',
           label: 'Show Widget',
         ),
+        MenuItem.checkbox(
+          checked: _launchAtStartup,
+          key: 'launch-at-startup',
+          label: 'Launch At Startup',
+        ),
         MenuItem.separator(),
         MenuItem.checkbox(
           checked: _clickThrough,
@@ -212,7 +231,7 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
         MenuItem.separator(),
         MenuItem(
           disabled: true,
-          label: 'Topmost Battery Display $packageVersion',
+          label: 'Topmost Battery Display $_version',
         ),
         MenuItem(
           key: 'github-repo',
@@ -251,6 +270,16 @@ class _MainAppState extends State<MainApp> with WindowListener, TrayListener {
         } else {
           _show = true;
           windowManager.show();
+        }
+        _saveConfig();
+
+      case 'launch-at-startup':
+        if (item.checked!) {
+          _launchAtStartup = false;
+          launchAtStartup.disable();
+        } else {
+          _launchAtStartup = true;
+          launchAtStartup.enable();
         }
         _saveConfig();
 
