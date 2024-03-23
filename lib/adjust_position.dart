@@ -19,8 +19,8 @@ Future<Offset> getAdjustedPosition(Offset original) async {
       if (screen.name == primary.name) {
         return original;
       } else {
-        return original /
-            (screen.scaleFactor! * primary.scaleFactor!).toDouble();
+        final ratio = (screen.scaleFactor! / primary.scaleFactor!).toDouble();
+        return original * ratio;
       }
     }
   }
